@@ -11,6 +11,7 @@ from org.apache.lucene.store import FSDirectory
 
 from .analyzer import AnalyzerFactory
 from .config import config
+from .similarity import SimilarityFactory
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -43,37 +44,34 @@ def main(args: Union[str, List[str]] = None) -> int:
     logging.info(f"data_dir: {config.data_dir}")
     logging.info(f"index_dir: {config.index_dir}")
     logging.info(f"analyzer: {config.analyzer}")
+    logging.info(f"similarity: {config.similarity}")
 
-    lucene.initVM()  # initialize VM to adapt java lucene to python
+    lucene.initVM()  # initialize VM to adapt Java Lucene to Python
 
-    data_dir = config.data_dir  # set data directory path (absolute or relative)
+    data_dir = config.data_dir
+    analyzer = AnalyzerFactory.get_analyzer(config.analyzer)
+    similarity = SimilarityFactory.get_similarity(config.similarity)
 
-    analyzer = AnalyzerFactory.get_analyzer(config.analyzer)  # retrieve specified analyzer
-
+    # Set up IndexWriterConfig with specified analyzer and similarity
     indexWriterConfig = IndexWriterConfig(analyzer)
+    indexWriterConfig.setSimilarity(similarity)
 
+    # Create and open the index directory
     base_name = os.path.basename(os.path.normpath(config.data_dir))
-    index_dir_name = f"{base_name}_{config.analyzer}"
+    index_dir_name = f"{base_name}_{config.analyzer}_{config.similarity}"
     full_index_path = os.path.join(config.index_dir, index_dir_name)
-    index_dir = FSDirectory.open(Paths.get(full_index_path))  # set index dir
+    index_dir = FSDirectory.open(Paths.get(full_index_path))
 
     indexWriter = IndexWriter(index_dir, indexWriterConfig)
 
+    # Start indexing files
     logging.info(f"Indexing directory {data_dir}...")
-    # os.listdir return a list of all files within
-    # the specified directory
     for file in os.listdir(data_dir):
-
-        # The following condition checks whether
-        # the filename ends with .txt or not
         if file.endswith(".txt"):
-            # Appending the filename to the path to obtain
-            # the fullpath of the file
             data_path = os.path.join(data_dir, file)
             index_txt_file(indexWriter, data_path)
 
     indexWriter.close()
-
     logging.info(f"Indexing complete, saved to '{full_index_path}'.")
 
     return 0

@@ -14,6 +14,7 @@ class Config:
 
     _instance = None  # To ensure only one instance (singleton)
     VALID_ANALYZERS = ["simple", "standard", "whitespace", "stop", "english", "english_spacy"]
+    VALID_SIMILARITIES = ["bm25", "classic"]
 
     def __new__(cls) -> "Config":
         """
@@ -63,6 +64,12 @@ class Config:
             default="standard",
             help="The analyzer to be used (simple, standard, whitespace, stop, english, english_spacy)",
         )
+        self._parser.add_argument(
+            "--similarity",
+            required=True,
+            default="bm25",
+            help="The similarity model to be used (bm25, classic)",
+        )
 
     def parse(self, args_str: Optional[str] = None) -> None:
         """
@@ -93,6 +100,14 @@ class Config:
         data_dir = self.get("data_dir")
         if not os.path.exists(data_dir):
             raise FileNotFoundError(f"Data directory '{data_dir}' does not exist.")
+
+    def _validate_similarity(self) -> None:
+        """
+        Validate that the specified analyzer is in the list of valid analyzers.
+        """
+        similarity = self.get("similarity")
+        if similarity not in self.VALID_SIMILARITIES:
+            raise ValueError(f"Invalid similarity '{similarity}'. Valid options are: {', '.join(self.VALID_ANALYZERS)}")
 
     def __getattr__(self, option):
         """

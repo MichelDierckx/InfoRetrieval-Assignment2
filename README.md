@@ -29,6 +29,7 @@ Program arguments:
 `--data_dir` *Directory containing the documents*  
 `--index_dir` *Directory that will contain the indexes*  
 `--analyzer` *The analyzer to be used (simple, standard, whitespace, stop, english, english_spacy)*
+`--similarity` *The similarity function to be used for document ranking (bm25, classic)*
 
 The program arguments can be provided either by a configuration file (by default config.ini) or by command-line
 arguments.
