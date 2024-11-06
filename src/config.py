@@ -91,6 +91,17 @@ class Config:
     def __getitem__(self, item):
         return self.__getattr__(item)
 
+    def get(self, option: str, default: Optional[str] = None) -> Optional[str]:
+        """
+        Retrieve configuration options with a default value if the option does not exist.
+        :param option: str, the configuration option to retrieve.
+        :param default: Optional[str], the default value to return if the option does not exist. Defaults to None.
+        :return: Optional[str], The value of the configuration option or the default value.
+        """
+        if self._namespace is None:
+            raise RuntimeError("The configuration has not been initialized. Call `parse()` first.")
+        return self._namespace.get(option, default)
+
 
 # Instantiate a shared configuration object for global access. Only one can exist.
 config = Config()
