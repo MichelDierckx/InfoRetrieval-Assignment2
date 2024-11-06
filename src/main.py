@@ -16,6 +16,10 @@ from .similarity import SimilarityFactory
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 
+def float_to_str_no_decimal_point(x: float) -> str:
+    return str(x).replace('.', '')
+
+
 def create_index_dir_name(data_dir: str, analyzer: str) -> str:
     # Get the base name of the directory from data_dir (e.g., 'full_docs_small')
     base_name = os.path.basename(os.path.normpath(data_dir))
@@ -45,12 +49,14 @@ def main(args: Union[str, List[str]] = None) -> int:
     logging.info(f"index_dir: {config.index_dir}")
     logging.info(f"analyzer: {config.analyzer}")
     logging.info(f"similarity: {config.similarity}")
+    logging.info(f"k1: {config.k1}")
+    logging.info(f"b: {config.b}")
 
     lucene.initVM()  # initialize VM to adapt Java Lucene to Python
 
     data_dir = config.data_dir
     analyzer = AnalyzerFactory.get_analyzer(config.analyzer)
-    similarity = SimilarityFactory.get_similarity(config.similarity)
+    similarity = SimilarityFactory.get_similarity(similarity_type=config.similarity, k1=config.k1, b=config.b)
 
     # Set up IndexWriterConfig with specified analyzer and similarity
     indexWriterConfig = IndexWriterConfig(analyzer)
@@ -58,7 +64,9 @@ def main(args: Union[str, List[str]] = None) -> int:
 
     # Create and open the index directory
     base_name = os.path.basename(os.path.normpath(config.data_dir))
-    index_dir_name = f"{base_name}_{config.analyzer}_{config.similarity}"
+    k1 = float_to_str_no_decimal_point(config.k1)
+    b = float_to_str_no_decimal_point(config.b)
+    index_dir_name = f"{base_name}_{config.analyzer}_{config.similarity}k1{k1}b{b}"
     full_index_path = os.path.join(config.index_dir, index_dir_name)
     index_dir = FSDirectory.open(Paths.get(full_index_path))
 

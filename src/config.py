@@ -70,6 +70,20 @@ class Config:
             default="bm25",
             help="The similarity model to be used (bm25, classic)",
         )
+        # Parameters for BM25
+        self._parser.add_argument(
+            "--k1",
+            type=float,
+            default=1.2,
+            help="BM25 k1 parameter, controls term frequency saturation. Typical range is 1.2 to 2.0",
+        )
+
+        self._parser.add_argument(
+            "--b",
+            type=float,
+            default=0.75,
+            help="BM25 b parameter, controls document length normalization. Typical range is 0 to 1",
+        )
 
     def parse(self, args_str: Optional[str] = None) -> None:
         """
