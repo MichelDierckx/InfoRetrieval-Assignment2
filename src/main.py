@@ -15,6 +15,16 @@ from .config import config
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 
+def create_index_dir_name(data_dir: str, analyzer: str) -> str:
+    # Get the base name of the directory from data_dir (e.g., 'full_docs_small')
+    base_name = os.path.basename(os.path.normpath(data_dir))
+
+    # Combine the base directory name with the analyzer name to create a unique index dir name
+    index_dir_name = f"{base_name}_{analyzer}"
+
+    return index_dir_name
+
+
 def index_txt_file(ind_writer: IndexWriter, file_path: str) -> None:
     """Indexes a single text file."""
     doc = Document()
@@ -36,8 +46,6 @@ def main(args: Union[str, List[str]] = None) -> int:
 
     lucene.initVM()  # initialize VM to adapt java lucene to python
 
-    index_dir = FSDirectory.open(Paths.get(config.index_dir))  # set index dir
-
     data_dir = config.data_dir  # set data directory path (absolute or relative)
     if not os.path.exists(data_dir):
         raise FileNotFoundError(f"Data directory '{data_dir}' does not exist.")
@@ -45,6 +53,11 @@ def main(args: Union[str, List[str]] = None) -> int:
     analyzer = AnalyzerFactory.get_analyzer(config.analyzer)  # retrieve specified analyzer
 
     indexWriterConfig = IndexWriterConfig(analyzer)
+
+    base_name = os.path.basename(os.path.normpath(config.data_dir))
+    index_dir_name = f"{base_name}_{config.analyzer}"
+    full_index_path = os.path.join(config.index_dir, index_dir_name)
+    index_dir = FSDirectory.open(Paths.get(full_index_path))  # set index dir
 
     indexWriter = IndexWriter(index_dir, indexWriterConfig)
 
@@ -63,7 +76,7 @@ def main(args: Union[str, List[str]] = None) -> int:
 
     indexWriter.close()
 
-    print("Indexing complete.")
+    logging.info(f"Indexing complete, saved to '{full_index_path}'.")
 
     return 0
 

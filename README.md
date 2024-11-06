@@ -27,7 +27,7 @@ python -m src.main --help
 Program arguments:
 
 `--data_dir` *Directory containing the documents*  
-`--index_dir` *Directory that will contain the index*  
+`--index_dir` *Directory that will contain the indexes*  
 `--analyzer` *The analyzer to be used (simple, standard, whitespace, stop, stem)*
 
 The program arguments can be provided either by a configuration file (by default config.ini) or by command-line

@@ -53,7 +53,7 @@ class Config:
             "--index_dir",
             required=True,
             default="index",
-            help="Directory that will contain the index.",
+            help="Directory that will contain the indexes.",
         )
         self._parser.add_argument(
             "--analyzer",
