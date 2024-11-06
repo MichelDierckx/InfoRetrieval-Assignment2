@@ -25,10 +25,13 @@ def index_txt_file(ind_writer: IndexWriter, file_path: str) -> None:
 
 
 def main(args: Union[str, List[str]] = None) -> int:
+    config.parse(args)  # parse config file or command line arguments
+    if config.get('help', False):
+        return 0
+
     logging.info(f"Lucene version: {lucene.VERSION}")  # 9.12.0
 
     lucene.initVM()  # initialize VM to adapt java lucene to python
-    config.parse(args)  # parse config file or command line arguments
 
     index_dir = FSDirectory.open(Paths.get(config.index_dir))  # set index dir
 
