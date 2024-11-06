@@ -2,3 +2,4 @@
 .idea
 data
 index
+__pycache__
