@@ -30,6 +30,9 @@ def main(args: Union[str, List[str]] = None) -> int:
         return 0
 
     logging.info(f"Lucene version: {lucene.VERSION}")  # 9.12.0
+    logging.info(f"data_dir: {config.data_dir}")
+    logging.info(f"index_dir: {config.index_dir}")
+    logging.info(f"analyzer: {config.analyzer}")
 
     lucene.initVM()  # initialize VM to adapt java lucene to python
 
