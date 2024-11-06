@@ -66,7 +66,7 @@ def main(args: Union[str, List[str]] = None) -> int:
     base_name = os.path.basename(os.path.normpath(config.data_dir))
     k1 = float_to_str_no_decimal_point(config.k1)
     b = float_to_str_no_decimal_point(config.b)
-    index_dir_name = f"{base_name}_{config.analyzer}_{config.similarity}k1{k1}b{b}"
+    index_dir_name = f"{base_name}_{config.analyzer}_{config.similarity}_{k1}_{b}"
     full_index_path = os.path.join(config.index_dir, index_dir_name)
     index_dir = FSDirectory.open(Paths.get(full_index_path))
 
