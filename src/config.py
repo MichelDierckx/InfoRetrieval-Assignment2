@@ -13,7 +13,7 @@ class Config:
     """
 
     _instance = None  # To ensure only one instance (singleton)
-    VALID_ANALYZERS = ["simple", "standard", "whitespace", "stop", "stem"]
+    VALID_ANALYZERS = ["simple", "standard", "whitespace", "stop", "english", "english_spacy"]
 
     def __new__(cls) -> "Config":
         """
@@ -61,7 +61,7 @@ class Config:
             "--analyzer",
             required=True,
             default="standard",
-            help="The analyzer to be used (simple, standard, whitespace, stop, stem)",
+            help="The analyzer to be used (simple, standard, whitespace, stop, english, english_spacy)",
         )
 
     def parse(self, args_str: Optional[str] = None) -> None:
