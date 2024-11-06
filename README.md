@@ -21,7 +21,7 @@ pip install -r requirements.txt
 To request an overview of the available parameters:
 
 ```bash
-python -m src.main --help
+python3 -m src.main --help
 ```
 
 Program arguments:
@@ -37,6 +37,6 @@ The command-line arguments take precedence over the configuration file.
 ### Running the program
 
 ```bash
-python -m src.main -c /path/to/config.ini
+python3 -m src.main -c /path/to/config.ini
 ```
 
