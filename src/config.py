@@ -1,3 +1,4 @@
+import os
 from typing import Optional
 
 import configargparse
@@ -12,6 +13,7 @@ class Config:
     """
 
     _instance = None  # To ensure only one instance (singleton)
+    VALID_ANALYZERS = ["simple", "standard", "whitespace", "stop", "stem"]
 
     def __new__(cls) -> "Config":
         """
@@ -73,6 +75,24 @@ class Config:
             Arguments not specified on the command line are taken from the config file.
         """
         self._namespace = vars(self._parser.parse_args(args_str))
+        self._validate_analyzer()
+        self._validate_data_dir()
+
+    def _validate_analyzer(self) -> None:
+        """
+        Validate that the specified analyzer is in the list of valid analyzers.
+        """
+        analyzer = self.get("analyzer")
+        if analyzer not in self.VALID_ANALYZERS:
+            raise ValueError(f"Invalid analyzer '{analyzer}'. Valid options are: {', '.join(self.VALID_ANALYZERS)}")
+
+    def _validate_data_dir(self) -> None:
+        """
+        Validate that the specified data directory exists.
+        """
+        data_dir = self.get("data_dir")
+        if not os.path.exists(data_dir):
+            raise FileNotFoundError(f"Data directory '{data_dir}' does not exist.")
 
     def __getattr__(self, option):
         """

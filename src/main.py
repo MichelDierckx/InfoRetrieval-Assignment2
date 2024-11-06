@@ -47,8 +47,6 @@ def main(args: Union[str, List[str]] = None) -> int:
     lucene.initVM()  # initialize VM to adapt java lucene to python
 
     data_dir = config.data_dir  # set data directory path (absolute or relative)
-    if not os.path.exists(data_dir):
-        raise FileNotFoundError(f"Data directory '{data_dir}' does not exist.")
 
     analyzer = AnalyzerFactory.get_analyzer(config.analyzer)  # retrieve specified analyzer
 
