@@ -7,7 +7,9 @@ import lucene
 import pandas as pd
 from java.nio.file import Paths
 from org.apache.lucene.document import Document, TextField, Field, StoredField
-from org.apache.lucene.index import IndexWriter, IndexWriterConfig, DirectoryReader, IndexSearcher
+from org.apache.lucene.index import IndexWriter, IndexWriterConfig, DirectoryReader
+from org.apache.lucene.queryparser.classic import QueryParser
+from org.apache.lucene.search import IndexSearcher
 from org.apache.lucene.store import FSDirectory
 
 from .analyzer import AnalyzerFactory
@@ -55,7 +57,8 @@ def index_txt_file(ind_writer: IndexWriter, data_dir: str, file: str) -> None:
         ind_writer.addDocument(doc)
 
 
-def rank_queries_from_file(index_searcher: IndexSearcher, input_file: str, output_file: str, delimiter: str = ',',
+def rank_queries_from_file(index_searcher: IndexSearcher, query_parser: QueryParser, input_file: str, output_file: str,
+                           delimiter: str = ',',
                            top_k: Optional[int] = 10) -> None:
     """
     Reads queries from a csv file and generates a ranking for them.
@@ -75,8 +78,8 @@ def rank_queries_from_file(index_searcher: IndexSearcher, input_file: str, outpu
             query_number = row['Query number']
             query_text = row['Query']
 
-            # TODO: query analysis, parsing, ...
-            query = None
+            # TODO: query analysis, parsing, ..., different parsers?
+            query = query_parser.parse(query_text)
 
             top_docs = index_searcher.search(query, top_k)  # Get top k results
             hits = top_docs.scoreDocs  # internal doc id's found for query
@@ -154,6 +157,7 @@ def main(args: Union[str, List[str]] = None) -> int:
     # Set up IndexWriterConfig with specified analyzer and similarity
     indexWriterConfig = IndexWriterConfig(analyzer)
     indexWriterConfig.setSimilarity(similarity)
+    indexWriterConfig.setOpenMode(IndexWriterConfig.OpenMode.CREATE)  # Overwrite existing index files if present
 
     # Create and open the index directory
     base_name = os.path.basename(os.path.normpath(config.data_dir))
@@ -189,7 +193,12 @@ def main(args: Union[str, List[str]] = None) -> int:
     rankings_file_name = f"{index_dir_name}_{queries_filename}.csv"
     rankings_file = os.path.join(config.ranking_dir, rankings_file_name)
 
-    rank_queries_from_file(index_searcher=searcher, input_file=config.queries, output_file=rankings_file,
+    # TODO: query analysis, parsing, ..., different parsers?
+    # Set up the QueryParser for the 'text_content' field
+    query_parser = QueryParser("text_content", analyzer)
+
+    rank_queries_from_file(index_searcher=searcher, query_parser=query_parser, input_file=config.queries,
+                           output_file=rankings_file,
                            delimiter=delimiter, top_k=10)
 
     k_list = [1, 3, 5, 10]
