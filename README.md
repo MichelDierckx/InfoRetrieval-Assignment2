@@ -32,6 +32,10 @@ Program arguments:
 `--similarity` *The similarity function to be used for document ranking (bm25, classic)*  
 `--k1` *BM25 k1 parameter, controls term frequency saturation. Typical range is 1.2 to 2.0*  
 `--b` *BM25 b parameter, controls document length normalization. Typical range is 0 to 1*  
+`--queries`: *Path to the query file (supported formats: CSV and TSV).*  
+`--ranking_dir`: *Directory where computed query results will be saved.*  
+`--evaluation_file`: *CSV file where evaluation results will be appended.*  
+`--reference_file`: *Path to the file containing the reference query results for evaluation.*
 
 The program arguments can be provided either by a configuration file (by default config.ini) or by command-line
 arguments.

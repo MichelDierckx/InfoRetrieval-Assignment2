@@ -85,6 +85,31 @@ class Config:
             help="BM25 b parameter, controls document length normalization. Typical range is 0 to 1",
         )
 
+        self._parser.add_argument(
+            "--queries",
+            required=False,
+            default="data/queries/dev_small_queries.csv",
+            help="File containing the queries (supported formats: CSV and TSV)",
+        )
+        self._parser.add_argument(
+            "--ranking_dir",
+            required=False,
+            default="results/ranking",
+            help="Directory that will contain the computed query results.",
+        )
+        self._parser.add_argument(
+            "--evaluation_file",
+            required=False,
+            default="results/evaluation/evaluation.csv",
+            help="A CSV file used to append the evaluation results.",
+        )
+        self._parser.add_argument(
+            "--reference_file",
+            required=False,
+            default="data/queries/dev_query_results_small.csv",
+            help="File that contains the reference query results.",
+        )
+
     def parse(self, args_str: Optional[str] = None) -> None:
         """
         Parse the configuration settings.
@@ -97,7 +122,7 @@ class Config:
         """
         self._namespace = vars(self._parser.parse_args(args_str))
         self._validate_analyzer()
-        self._validate_data_dir()
+        self._validate_paths()
 
     def _validate_analyzer(self) -> None:
         """
@@ -107,13 +132,27 @@ class Config:
         if analyzer not in self.VALID_ANALYZERS:
             raise ValueError(f"Invalid analyzer '{analyzer}'. Valid options are: {', '.join(self.VALID_ANALYZERS)}")
 
-    def _validate_data_dir(self) -> None:
+    def _validate_paths(self) -> None:
         """
         Validate that the specified data directory exists.
         """
         data_dir = self.get("data_dir")
         if not os.path.exists(data_dir):
             raise FileNotFoundError(f"Data directory '{data_dir}' does not exist.")
+        ranking_dir = self.get("ranking_dir")
+        if not os.path.exists(data_dir):
+            raise FileNotFoundError(f"Ranking directory '{ranking_dir}' does not exist.")
+        evaluation_file = self.get("evaluation_file")
+        if not evaluation_file.endswith('.csv'):
+            raise ValueError(f"Invalid file format for evaluation file. Expected a .csv, but got '{evaluation_file}'.")
+        queries = self.get("queries")
+        if not os.path.exists(data_dir):
+            raise FileNotFoundError(f"Specified queries file '{queries}' does not exist.")
+        if not (queries.endswith('.tsv') or queries.endswith('.csv')):
+            raise ValueError(f"Invalid file format for queries. Expected a .csv or .tsv file, but got '{queries}'.")
+        reference_file = self.get("data_dir")
+        if not os.path.exists(data_dir):
+            raise FileNotFoundError(f"Reference file '{reference_file}' does not exist.")
 
     def _validate_similarity(self) -> None:
         """
