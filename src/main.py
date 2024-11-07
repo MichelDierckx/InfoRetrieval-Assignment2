@@ -75,7 +75,7 @@ def rank_queries_from_file(index_searcher: IndexSearcher, input_file: str, outpu
             query_number = row['Query number']
             query_text = row['Query']
 
-            # TODO: query construction
+            # TODO: query analysis, parsing, ...
             query = None
 
             top_docs = index_searcher.search(query, top_k)  # Get top k results
@@ -173,8 +173,6 @@ def main(args: Union[str, List[str]] = None) -> int:
 
     indexWriter.close()
     logging.info(f"Indexing complete, saved to '{full_index_path}'.")
-
-    # TODO: index construction and querying
 
     # create reader object
     reader = DirectoryReader.open(index_dir)
