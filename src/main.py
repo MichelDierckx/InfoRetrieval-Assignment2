@@ -1,6 +1,7 @@
 import csv
 import logging
 import os
+import time
 from typing import Union, List, Optional
 
 import lucene
@@ -78,8 +79,8 @@ def rank_queries_from_file(index_searcher: IndexSearcher, query_parser: QueryPar
             query_number = row['Query number']
             query_text = row['Query']
 
-            # TODO: query analysis, parsing, ..., different parsers?
-            query = query_parser.parse(query_text)
+            # TODO: query analysis, parsing, ..., different parsers? For example special character support?
+            query = query_parser.parse(QueryParser.escape(query_text))  # escape special characters used by lucene
 
             top_docs = index_searcher.search(query, top_k)  # Get top k results
             hits = top_docs.scoreDocs  # internal doc id's found for query
@@ -92,7 +93,8 @@ def rank_queries_from_file(index_searcher: IndexSearcher, query_parser: QueryPar
     logging.info(f"Saved document rankings to '{output_file}'.")
 
 
-def update_evaluation_file(evaluation_file_path: str, run_name: str, k: int, map_at_k: float, mar_at_k: float):
+def update_evaluation_file(evaluation_file_path: str, run_name: str, k: int, map_at_k: float, mar_at_k: float,
+                           elapsed_time: float):
     # Check if the file exists
     file_exists = os.path.exists(evaluation_file_path)
 
@@ -103,25 +105,26 @@ def update_evaluation_file(evaluation_file_path: str, run_name: str, k: int, map
             rows = list(reader)
 
         # Check if headers exist, if not, create them
-        if not rows or rows[0] != ['run_name', 'k', 'MAP@K', 'MAR@K']:
-            rows.insert(0, ['run_name', 'k', 'MAP@K', 'MAR@K'])
+        if not rows or rows[0] != ['run_name', 'k', 'MAP@K', 'MAR@K', 'time(s)']:
+            rows.insert(0, ['run_name', 'k', 'MAP@K', 'MAR@K', 'time(s)'])
 
         # Check if the run_name and k already exist
         updated = False
         for i, row in enumerate(rows):
             if row[0] == run_name and int(row[1]) == k:
                 # If run_name and k exist, update that row with new values
-                rows[i] = [run_name, k, map_at_k, mar_at_k]
+                rows[i] = [run_name, k, map_at_k, mar_at_k, f"{elapsed_time:.2f}"]
                 updated = True
                 break
 
         if not updated:
             # If run_name and k do not exist, append a new row
-            rows.append([run_name, k, map_at_k, mar_at_k])
+            rows.append([run_name, k, map_at_k, mar_at_k, f"{elapsed_time:.2f}"])
 
     else:
         # If the file does not exist, create it and add the header
-        rows = [['run_name', 'k', 'MAP@K', 'MAR@K'], [run_name, k, map_at_k, mar_at_k]]
+        rows = [['run_name', 'k', 'MAP@K', 'MAR@K', 'time(s)'],
+                [run_name, k, map_at_k, mar_at_k, f"{elapsed_time:.2f}"]]
 
     # Write the updated or new rows to the CSV file
     with open(evaluation_file_path, mode='w', newline='', encoding='utf-8') as file:
@@ -130,6 +133,7 @@ def update_evaluation_file(evaluation_file_path: str, run_name: str, k: int, map
 
 
 def main(args: Union[str, List[str]] = None) -> int:
+    start_time = time.time()  # Start timing
     config.parse(args)  # parse config file or command line arguments
     if config.get('help', False):
         return 0
@@ -151,39 +155,45 @@ def main(args: Union[str, List[str]] = None) -> int:
     lucene.initVM()  # initialize VM to adapt Java Lucene to Python
 
     data_dir = config.data_dir
-    analyzer = AnalyzerFactory.get_analyzer(config.analyzer)
-    similarity = SimilarityFactory.get_similarity(similarity_type=config.similarity, k1=config.k1, b=config.b)
-
-    # Set up IndexWriterConfig with specified analyzer and similarity
-    indexWriterConfig = IndexWriterConfig(analyzer)
-    indexWriterConfig.setSimilarity(similarity)
-    indexWriterConfig.setOpenMode(IndexWriterConfig.OpenMode.CREATE)  # Overwrite existing index files if present
-
-    # Create and open the index directory
     base_name = os.path.basename(os.path.normpath(config.data_dir))
     k1 = float_to_str_no_decimal_point(config.k1)
     b = float_to_str_no_decimal_point(config.b)
     index_dir_name = f"{base_name}_{config.analyzer}_{config.similarity}_{k1}_{b}"
     full_index_path = os.path.join(config.index_dir, index_dir_name)
+
+    analyzer = AnalyzerFactory.get_analyzer(config.analyzer)
+
+    if os.path.exists(full_index_path) and any(os.scandir(full_index_path)):
+        logging.info(f"Index directory '{full_index_path}' already exists, skipping indexing.")
+    else:
+        similarity = SimilarityFactory.get_similarity(similarity_type=config.similarity, k1=config.k1, b=config.b)
+        # Set up IndexWriterConfig with specified analyzer and similarity
+        indexWriterConfig = IndexWriterConfig(analyzer)
+        indexWriterConfig.setSimilarity(similarity)
+        indexWriterConfig.setOpenMode(IndexWriterConfig.OpenMode.CREATE)  # Overwrite existing index files if present
+
+        # Create and open the index directory
+        index_dir = FSDirectory.open(Paths.get(full_index_path))
+
+        indexWriter = IndexWriter(index_dir, indexWriterConfig)
+
+        # Start indexing files
+        logging.info(f"Indexing directory {data_dir}...")
+        for file in os.listdir(data_dir):
+            if file.endswith(".txt"):
+                index_txt_file(indexWriter, data_dir, file)
+
+        indexWriter.close()
+        logging.info(f"Indexing complete, saved to '{full_index_path}'.")
+
+    # Open the index directory
     index_dir = FSDirectory.open(Paths.get(full_index_path))
-
-    indexWriter = IndexWriter(index_dir, indexWriterConfig)
-
-    # Start indexing files
-    logging.info(f"Indexing directory {data_dir}...")
-    for file in os.listdir(data_dir):
-        if file.endswith(".txt"):
-            index_txt_file(indexWriter, data_dir, file)
-
-    indexWriter.close()
-    logging.info(f"Indexing complete, saved to '{full_index_path}'.")
-
     # create reader object
     reader = DirectoryReader.open(index_dir)
     # instantiate/define reader
     searcher = IndexSearcher(reader)
 
-    queries_file: str = config.queries_file
+    queries_file: str = config.queries
     if queries_file.endswith(".tsv"):
         delimiter = '\t'
     else:
@@ -201,11 +211,15 @@ def main(args: Union[str, List[str]] = None) -> int:
                            output_file=rankings_file,
                            delimiter=delimiter, top_k=10)
 
+    end_time = time.time()
+    elapsed_time = end_time - start_time  # Calculate the elapsed time
+    logging.info(f"Program execution time: {elapsed_time:.2f} seconds")
+
     k_list = [1, 3, 5, 10]
     for k in k_list:
-        evaluation = evaluate(result_file=rankings_file, expected_result_file=config.reference_file, k=10)
+        evaluation = evaluate(result_file=rankings_file, expected_result_file=config.reference_file, k=k)
         update_evaluation_file(evaluation_file_path=config.evaluation_file, run_name=rankings_file_name, k=k,
-                               map_at_k=evaluation.map_at_k, mar_at_k=evaluation.mar_at_k)
+                               map_at_k=evaluation.map_at_k, mar_at_k=evaluation.mar_at_k, elapsed_time=elapsed_time)
 
     return 0
 
