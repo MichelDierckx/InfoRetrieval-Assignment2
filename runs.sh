@@ -20,21 +20,21 @@ RANKING_DIR="results/ranking"
 EVALUATION_FILE="results/evaluation/evaluation.csv"
 REFERENCE_FILE="data/queries/dev_query_results.csv"
 
-## Loop through each analyzer and run the command
-#for ANALYZER in "${ANALYZERS[@]}"; do
-#    echo "Running with analyzer: $ANALYZER"
-#    python3 -m src.main \
-#        --data_dir "$DATA_DIR" \
-#        --index_dir "$INDEX_DIR" \
-#        --analyzer "$ANALYZER" \
-#        --similarity "$SIMILARITY" \
-#        --k1 "$K1" \
-#        --b "$B" \
-#        --queries "$QUERIES" \
-#        --ranking_dir "$RANKING_DIR" \
-#        --evaluation_file "$EVALUATION_FILE" \
-#        --reference_file "$REFERENCE_FILE"
-#done
+# Loop through each analyzer and run the command
+for ANALYZER in "${ANALYZERS[@]}"; do
+    echo "Running with analyzer: $ANALYZER"
+    python3 -m src.main \
+        --data_dir "$DATA_DIR" \
+        --index_dir "$INDEX_DIR" \
+        --analyzer "$ANALYZER" \
+        --similarity "$SIMILARITY" \
+        --k1 "$K1" \
+        --b "$B" \
+        --queries "$QUERIES" \
+        --ranking_dir "$RANKING_DIR" \
+        --evaluation_file "$EVALUATION_FILE" \
+        --reference_file "$REFERENCE_FILE"
+done
 
 # Additional run with english analyzer and classic similarity
 echo "Running with analyzer: english_spacy and similarity: classic"
