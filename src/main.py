@@ -52,7 +52,7 @@ def index_txt_file(ind_writer: IndexWriter, data_dir: str, file: str) -> None:
     doc = Document()
     with open(data_path, "r", encoding='utf-8') as f:
         text_to_index = f.read()
-        doc.add(TextField("text_content", text_to_index, Field.Store.YES))
+        doc.add(TextField("text_content", text_to_index, Field.Store.NO))  # Don't store the text field
         doc_id = extract_id_from_filename(file)
         doc.add(StoredField("doc_id", doc_id))  # stored but not indexed
         ind_writer.addDocument(doc)
