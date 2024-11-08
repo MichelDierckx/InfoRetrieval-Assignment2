@@ -140,18 +140,18 @@ class Config:
         if not os.path.exists(data_dir):
             raise FileNotFoundError(f"Data directory '{data_dir}' does not exist.")
         ranking_dir = self.get("ranking_dir")
-        if not os.path.exists(data_dir):
+        if not os.path.exists(ranking_dir):
             raise FileNotFoundError(f"Ranking directory '{ranking_dir}' does not exist.")
         evaluation_file = self.get("evaluation_file")
         if not evaluation_file.endswith('.csv'):
             raise ValueError(f"Invalid file format for evaluation file. Expected a .csv, but got '{evaluation_file}'.")
         queries = self.get("queries")
-        if not os.path.exists(data_dir):
+        if not os.path.exists(queries):
             raise FileNotFoundError(f"Specified queries file '{queries}' does not exist.")
         if not (queries.endswith('.tsv') or queries.endswith('.csv')):
             raise ValueError(f"Invalid file format for queries. Expected a .csv or .tsv file, but got '{queries}'.")
-        reference_file = self.get("data_dir")
-        if not os.path.exists(data_dir):
+        reference_file = self.get("reference_file")
+        if not os.path.exists(reference_file):
             raise FileNotFoundError(f"Reference file '{reference_file}' does not exist.")
 
     def _validate_similarity(self) -> None:
