@@ -162,11 +162,11 @@ def main(args: Union[str, List[str]] = None) -> int:
     full_index_path = os.path.join(config.index_dir, index_dir_name)
 
     analyzer = AnalyzerFactory.get_analyzer(config.analyzer)
+    similarity = SimilarityFactory.get_similarity(similarity_type=config.similarity, k1=config.k1, b=config.b)
 
     if os.path.exists(full_index_path) and any(os.scandir(full_index_path)):
         logging.info(f"Index directory '{full_index_path}' already exists, skipping indexing.")
     else:
-        similarity = SimilarityFactory.get_similarity(similarity_type=config.similarity, k1=config.k1, b=config.b)
         # Set up IndexWriterConfig with specified analyzer and similarity
         indexWriterConfig = IndexWriterConfig(analyzer)
         indexWriterConfig.setSimilarity(similarity)
@@ -192,6 +192,7 @@ def main(args: Union[str, List[str]] = None) -> int:
     reader = DirectoryReader.open(index_dir)
     # instantiate/define reader
     searcher = IndexSearcher(reader)
+    searcher.setSimilarity(similarity)
 
     queries_file: str = config.queries
     if queries_file.endswith(".tsv"):
