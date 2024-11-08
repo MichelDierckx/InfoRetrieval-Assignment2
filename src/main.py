@@ -79,7 +79,7 @@ def rank_queries_from_file(index_searcher: IndexSearcher, query_parser: QueryPar
             query_number = row['Query number']
             query_text = row['Query']
 
-            # TODO: query analysis, parsing, ..., different parsers? For example special character support?
+            # TODO: different types of querying? fuzzy queries, boolean queries, exact queries, ...?
             query = query_parser.parse(QueryParser.escape(query_text))  # escape special characters used by lucene
 
             top_docs = index_searcher.search(query, top_k)  # Get top k results
@@ -204,7 +204,7 @@ def main(args: Union[str, List[str]] = None) -> int:
     rankings_file_name = f"{index_dir_name}_{queries_filename}.csv"
     rankings_file = os.path.join(config.ranking_dir, rankings_file_name)
 
-    # TODO: query analysis, parsing, ..., different parsers?
+    # TODO: different types of querying?
     # Set up the QueryParser for the 'text_content' field
     query_parser = QueryParser("text_content", analyzer)
 
@@ -216,6 +216,7 @@ def main(args: Union[str, List[str]] = None) -> int:
     elapsed_time = end_time - start_time  # Calculate the elapsed time
     logging.info(f"Program execution time: {elapsed_time:.2f} seconds")
 
+    # TODO: in case of a different type of querying: add something extra to run_name to differentiate from other runs
     k_list = [1, 3, 5, 10]
     for k in k_list:
         evaluation = evaluate(result_file=rankings_file, expected_result_file=config.reference_file, k=k)
