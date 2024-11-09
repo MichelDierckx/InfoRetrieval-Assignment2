@@ -8,15 +8,15 @@ import lucene
 import pandas as pd
 from java.nio.file import Paths
 from org.apache.lucene.document import Document, TextField, Field, StoredField
-from org.apache.lucene.index import IndexWriter, IndexWriterConfig, DirectoryReader, Term
+from org.apache.lucene.index import IndexWriter, IndexWriterConfig, DirectoryReader
 from org.apache.lucene.queryparser.classic import QueryParser
-from org.apache.lucene.search import IndexSearcher, BooleanQuery, FuzzyQuery, PhraseQuery, TermQuery, BooleanClause, WildcardQuery
-
+from org.apache.lucene.search import IndexSearcher
 from org.apache.lucene.store import FSDirectory
 
 from .analyzer import AnalyzerFactory
 from .config import config
 from .evaluate import evaluate
+from .query_factory import QueryFactory
 from .similarity import SimilarityFactory
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -83,29 +83,9 @@ def rank_queries_from_file(index_searcher: IndexSearcher, query_parser: QueryPar
             query_text = row['Query']
 
             # TODO: different types of querying? fuzzy queries, boolean queries, exact queries, ...?
-            if query_type == "fuzzy":
-                term = Term("text_content", QueryParser.escape(query_text))
-                query = FuzzyQuery(term, maxEdits=maxEdits)
-            elif query_type == "phrase":
-                phrase_query = PhraseQuery.Builder(slop)
-                terms = query_text.split()
-                for t in terms:
-                    term = Term("text_content", t)
-                    phrase_query.add(term)
-                phrase_query.setSlop(slop)
-                query = phrase_query.build()
-            elif query_type == "boolean":
-                boolean_query = BooleanQuery.Builder()
-                terms = query_text.split()
-                for t in terms:
-                    term = Term("text_content", QueryParser.escape(t))
-                    boolean_query.add(TermQuery(term), BooleanClause.Occur.MUST)
-                query = boolean_query.build()
-            elif query_type == "wildcard" and not query_text.startswith(("*", "?")):
-                term = Term("text_content", f"{query_text}*")
-                query = WildcardQuery(term)
-            else:
-                query = query_parser.parse(QueryParser.escape(query_text))  # escape special characters used by lucene
+            query = QueryFactory.create_query(query_text=query_text, query_type=query_type, query_parser=query_parser,
+                                              maxEdits=maxEdits, slop=slop)
+
             top_docs = index_searcher.search(query, top_k)  # Get top k results
             hits = top_docs.scoreDocs  # internal doc id's found for query
             nr_hits = top_docs.totalHits  # number of hits
@@ -233,8 +213,8 @@ def main(args: Union[str, List[str]] = None) -> int:
         rankings_file_name = f"{index_dir_name}_{config.query_type}_{queries_filename}.csv"
         rankings_file = os.path.join(config.ranking_dir, rankings_file_name)
         rank_queries_from_file(index_searcher=searcher, query_parser=query_parser, input_file=config.queries,
-                           output_file=rankings_file,
-                           delimiter=delimiter, top_k=10, query_type=config.query_type)
+                               output_file=rankings_file,
+                               delimiter=delimiter, top_k=10, query_type=config.query_type)
     elif config.query_type == "phrase":
         slop = config.get('slop')
 

@@ -15,7 +15,7 @@ class Config:
     _instance = None  # To ensure only one instance (singleton)
     VALID_ANALYZERS = ["simple", "standard", "whitespace", "stop", "english", "english_spacy"]
     VALID_SIMILARITIES = ["bm25", "classic"]
-    VALID_QUERY_TYPES = ["exact", "fuzzy", "phrase", "boolean", "wildcard"]
+    VALID_QUERY_TYPES = ["fuzzy", "phrase", "boolean_and", "boolean_or"]
     VALID_MAX_EDITS = [0, 1, 2]
 
     def __new__(cls) -> "Config":
@@ -114,8 +114,8 @@ class Config:
         self._parser.add_argument(
             "--query_type",
             required=False,
-            default="exact",
-            help="The type of query to be evaluated (exact, fuzzy, phrase, boolean, wildcard)",
+            default="boolean_or",
+            help="The type of query to be evaluated (fuzzy, phrase, boolean_and, boolean_or)",
         )
         self._parser.add_argument(
             "--maxEdits",
@@ -125,7 +125,7 @@ class Config:
             help="Specify the maximum number of edits (insert, delete or change) that can happen. Must be between 0 and 2 "
         )
         self._parser.add_argument(
-           "--slop",
+            "--slop",
             required=False,
             default=0,
             type=int,
