@@ -15,6 +15,8 @@ class Config:
     _instance = None  # To ensure only one instance (singleton)
     VALID_ANALYZERS = ["simple", "standard", "whitespace", "stop", "english", "english_spacy"]
     VALID_SIMILARITIES = ["bm25", "classic"]
+    VALID_QUERY_TYPES = ["exact", "fuzzy", "phrase", "boolean", "wildcard"]
+    VALID_MAX_EDITS = [0, 1, 2]
 
     def __new__(cls) -> "Config":
         """
@@ -109,6 +111,26 @@ class Config:
             default="data/queries/dev_query_results_small.csv",
             help="File that contains the reference query results.",
         )
+        self._parser.add_argument(
+            "--query_type",
+            required=False,
+            default="exact",
+            help="The type of query to be evaluated (exact, fuzzy, phrase, boolean, wildcard)",
+        )
+        self._parser.add_argument(
+            "--maxEdits",
+            required=False,
+            default=2,
+            type=int,
+            help="Specify the maximum number of edits (insert, delete or change) that can happen. Must be between 0 and 2 "
+        )
+        self._parser.add_argument(
+           "--slop",
+            required=False,
+            default=0,
+            type=int,
+            help="Specify the number of terms that may occur between terms in the phrase"
+        )
 
     def parse(self, args_str: Optional[str] = None) -> None:
         """
@@ -123,6 +145,7 @@ class Config:
         self._namespace = vars(self._parser.parse_args(args_str))
         self._validate_analyzer()
         self._validate_paths()
+        self._validate_query_parameters()
 
     def _validate_analyzer(self) -> None:
         """
@@ -162,6 +185,20 @@ class Config:
         if similarity not in self.VALID_SIMILARITIES:
             raise ValueError(f"Invalid similarity '{similarity}'. Valid options are: {', '.join(self.VALID_ANALYZERS)}")
 
+    def _validate_query_parameters(self) -> None:
+        """
+        Validate that the specified query type  parameters are valid.
+        """
+        query_type = self.get("query_type")
+        if query_type not in self.VALID_QUERY_TYPES:
+            raise ValueError(f"Query type '{query_type}' is not supported")
+        max_edits = self.get("maxEdits")
+        if query_type == "fuzzy" and max_edits not in self.VALID_MAX_EDITS:
+            raise ValueError("maxEdits must be between 0 and 2")
+        slop = self.get("slop")
+        if query_type == "phrase" and int(slop) < 0:
+            raise ValueError("Slop must be positive")
+
     def __getattr__(self, option):
         """
         Retrieve configuration options as attributes.
@@ -170,7 +207,6 @@ class Config:
         """
         if self._namespace is None:
             raise RuntimeError("The configuration has not been initialized. Call `parse()` first.")
-
         if option not in self._namespace:
             raise KeyError(f"The configuration option '{option}' does not exist.")
 

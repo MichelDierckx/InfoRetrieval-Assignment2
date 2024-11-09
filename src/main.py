@@ -8,9 +8,10 @@ import lucene
 import pandas as pd
 from java.nio.file import Paths
 from org.apache.lucene.document import Document, TextField, Field, StoredField
-from org.apache.lucene.index import IndexWriter, IndexWriterConfig, DirectoryReader
+from org.apache.lucene.index import IndexWriter, IndexWriterConfig, DirectoryReader, Term
 from org.apache.lucene.queryparser.classic import QueryParser
-from org.apache.lucene.search import IndexSearcher
+from org.apache.lucene.search import IndexSearcher, BooleanQuery, FuzzyQuery, PhraseQuery, TermQuery, BooleanClause, WildcardQuery
+
 from org.apache.lucene.store import FSDirectory
 
 from .analyzer import AnalyzerFactory
@@ -60,7 +61,7 @@ def index_txt_file(ind_writer: IndexWriter, data_dir: str, file: str) -> None:
 
 def rank_queries_from_file(index_searcher: IndexSearcher, query_parser: QueryParser, input_file: str, output_file: str,
                            delimiter: str = ',',
-                           top_k: Optional[int] = 10) -> None:
+                           top_k: Optional[int] = 10, query_type: str = "", maxEdits: int = 0, slop: int = 0) -> None:
     """
     Reads queries from a csv file and generates a ranking for them.
 
@@ -68,6 +69,8 @@ def rank_queries_from_file(index_searcher: IndexSearcher, query_parser: QueryPar
     :param output_file: Path to the output file where rankings will be saved.
     :param delimiter: The character used to separate values in the input file (default is ',').
     :param top_k: How many top ranked documents to save in the output file; if None, saves all.
+    :param query_type: The type of query
+    :param maxEdits: The maximum number of edits allowed per query
     """
     logging.info(
         f"Ranking documents for the queries in '{input_file}' with limit: {top_k if top_k is not None else 'no limit'}...")
@@ -80,8 +83,29 @@ def rank_queries_from_file(index_searcher: IndexSearcher, query_parser: QueryPar
             query_text = row['Query']
 
             # TODO: different types of querying? fuzzy queries, boolean queries, exact queries, ...?
-            query = query_parser.parse(QueryParser.escape(query_text))  # escape special characters used by lucene
-
+            if query_type == "fuzzy":
+                term = Term("text_content", QueryParser.escape(query_text))
+                query = FuzzyQuery(term, maxEdits=maxEdits)
+            elif query_type == "phrase":
+                phrase_query = PhraseQuery.Builder(slop)
+                terms = query_text.split()
+                for t in terms:
+                    term = Term("text_content", t)
+                    phrase_query.add(term)
+                phrase_query.setSlop(slop)
+                query = phrase_query.build()
+            elif query_type == "boolean":
+                boolean_query = BooleanQuery.Builder()
+                terms = query_text.split()
+                for t in terms:
+                    term = Term("text_content", QueryParser.escape(t))
+                    boolean_query.add(TermQuery(term), BooleanClause.Occur.MUST)
+                query = boolean_query.build()
+            elif query_type == "wildcard" and not query_text.startswith(("*", "?")):
+                term = Term("text_content", f"{query_text}*")
+                query = WildcardQuery(term)
+            else:
+                query = query_parser.parse(QueryParser.escape(query_text))  # escape special characters used by lucene
             top_docs = index_searcher.search(query, top_k)  # Get top k results
             hits = top_docs.scoreDocs  # internal doc id's found for query
             nr_hits = top_docs.totalHits  # number of hits
@@ -151,6 +175,7 @@ def main(args: Union[str, List[str]] = None) -> int:
     logging.info(f"ranking_dir: {config.get('ranking_dir')}")
     logging.info(f"evaluation_dir: {config.get('evaluation_dir')}")
     logging.info(f"reference_file: {config.get('reference_file')}")
+    logging.info(f"query type: {config.query_type}")
 
     lucene.initVM()  # initialize VM to adapt Java Lucene to Python
 
@@ -201,22 +226,34 @@ def main(args: Union[str, List[str]] = None) -> int:
         delimiter = ','
 
     queries_filename = os.path.splitext(os.path.basename(config.queries))[0]
-    rankings_file_name = f"{index_dir_name}_{queries_filename}.csv"
-    rankings_file = os.path.join(config.ranking_dir, rankings_file_name)
 
-    # TODO: different types of querying?
     # Set up the QueryParser for the 'text_content' field
     query_parser = QueryParser("text_content", analyzer)
-
-    rank_queries_from_file(index_searcher=searcher, query_parser=query_parser, input_file=config.queries,
+    if config.query_type != "fuzzy" or config.query_type != "phrase":
+        rankings_file_name = f"{index_dir_name}_{config.query_type}_{queries_filename}.csv"
+        rankings_file = os.path.join(config.ranking_dir, rankings_file_name)
+        rank_queries_from_file(index_searcher=searcher, query_parser=query_parser, input_file=config.queries,
                            output_file=rankings_file,
-                           delimiter=delimiter, top_k=10)
+                           delimiter=delimiter, top_k=10, query_type=config.query_type)
+    elif config.query_type == "phrase":
+        slop = config.get('slop')
 
+        rankings_file_name = f"{index_dir_name}_{config.query_type}_{slop}_{queries_filename}.csv"
+        rankings_file = os.path.join(config.ranking_dir, rankings_file_name)
+        rank_queries_from_file(index_searcher=searcher, query_parser=query_parser, input_file=config.queries,
+                               output_file=rankings_file,
+                               delimiter=delimiter, top_k=10, query_type=config.query_type, slop=slop)
+    else:
+        max_edits = config.get("maxEdits")
+        rankings_file_name = f"{index_dir_name}_{config.query_type}_{max_edits}_{queries_filename}.csv"
+        rankings_file = os.path.join(config.ranking_dir, rankings_file_name)
+        rank_queries_from_file(index_searcher=searcher, query_parser=query_parser, input_file=config.queries,
+                               output_file=rankings_file,
+                               delimiter=delimiter, top_k=10, query_type=config.query_type, maxEdits=max_edits)
     end_time = time.time()
     elapsed_time = end_time - start_time  # Calculate the elapsed time
     logging.info(f"Program execution time: {elapsed_time:.2f} seconds")
 
-    # TODO: in case of a different type of querying: add something extra to run_name to differentiate from other runs
     k_list = [1, 3, 5, 10]
     for k in k_list:
         evaluation = evaluate(result_file=rankings_file, expected_result_file=config.reference_file, k=k)
