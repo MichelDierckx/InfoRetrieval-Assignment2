@@ -1,5 +1,6 @@
 from org.apache.lucene.queryparser.classic import QueryParser
-from org.apache.lucene.search import BooleanQuery, PhraseQuery, Term, BooleanClause, FuzzyQuery
+from org.apache.lucene.search import BooleanQuery, PhraseQuery, BooleanClause, FuzzyQuery
+from org.apache.lucene.index import Term
 
 
 class QueryFactory:
@@ -24,7 +25,7 @@ class QueryFactory:
         for term_text in terms:
             escaped_term = QueryParser.escape(term_text)
             term = Term("text_content", escaped_term)
-            fuzzy_query = FuzzyQuery(term, maxEdits, prefixLength, maxExpansions)
+            fuzzy_query = FuzzyQuery(term, prefixLength, maxExpansions, maxEdits=maxEdits)
             boolean_query_builder.add(fuzzy_query, BooleanClause.Occur.SHOULD)
 
         return boolean_query_builder.build()
