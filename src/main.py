@@ -209,9 +209,7 @@ def main(args: Union[str, List[str]] = None) -> int:
 
     # Set up the QueryParser for the 'text_content' field
     query_parser = QueryParser("text_content", analyzer)
-    print(config.query_type)
     if config.query_type != "fuzzy" and config.query_type != "phrase":
-        print("other")
         rankings_file_name = f"{index_dir_name}_{config.query_type}_{queries_filename}.csv"
         rankings_file = os.path.join(config.ranking_dir, rankings_file_name)
         rank_queries_from_file(index_searcher=searcher, query_parser=query_parser, input_file=config.queries,
@@ -225,7 +223,6 @@ def main(args: Union[str, List[str]] = None) -> int:
                                output_file=rankings_file,
                                delimiter=delimiter, top_k=10, query_type=config.query_type, slop=slop)
     else:
-        print("fuzzy")
         max_edits = config.get("maxEdits")
         rankings_file_name = f"{index_dir_name}_{config.query_type}_{max_edits}_{queries_filename}.csv"
         rankings_file = os.path.join(config.ranking_dir, rankings_file_name)
