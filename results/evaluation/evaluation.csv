@@ -51,10 +51,6 @@ full_docs_english_spacy_bm25_12_075_fuzzy_dev_queries.csv,1,0.2676680146350857,0
 full_docs_english_spacy_bm25_12_075_fuzzy_dev_queries.csv,3,0.30560369728480646,0.06476667308556391,29.27
 full_docs_english_spacy_bm25_12_075_fuzzy_dev_queries.csv,5,0.3043498726918715,0.0932665768021054,29.27
 full_docs_english_spacy_bm25_12_075_fuzzy_dev_queries.csv,10,0.2890076819717339,0.14140188715578664,29.27
-full_docs_english_spacy_bm25_12_075_wildcard_dev_queries.csv,1,0.0,0.0,1.93
-full_docs_english_spacy_bm25_12_075_wildcard_dev_queries.csv,3,0.0,0.0,1.93
-full_docs_english_spacy_bm25_12_075_wildcard_dev_queries.csv,5,0.0,0.0,1.93
-full_docs_english_spacy_bm25_12_075_wildcard_dev_queries.csv,10,0.0,0.0,1.93
 full_docs_english_spacy_bm25_12_075_boolean_or_dev_queries.csv,1,0.8012709416522241,0.08012709416522242,9.26
 full_docs_english_spacy_bm25_12_075_boolean_or_dev_queries.csv,3,0.8506643558636626,0.2146735990756788,9.26
 full_docs_english_spacy_bm25_12_075_boolean_or_dev_queries.csv,5,0.8268935746838694,0.3251877527440786,9.26
