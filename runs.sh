@@ -62,5 +62,19 @@ python3 -m src.main \
     --evaluation_file "$EVALUATION_FILE" \
     --reference_file "$REFERENCE_FILE"
 
+# Additional run with english analyzer and custom BM25 parameters (k1=0.5, b=0.9)
+echo "Run for queries file 'queries.csv'"
+python3 -m src.main \
+    --data_dir "$DATA_DIR" \
+    --index_dir "$INDEX_DIR" \
+    --analyzer "english_spacy" \
+    --similarity "bm25" \
+    --k1 "$K1" \
+    --b "$B" \
+    --queries "data/queries/queries.csv" \
+    --ranking_dir "$RANKING_DIR" \
+    --evaluation_file "$EVALUATION_FILE" \
+    --reference_file "$REFERENCE_FILE"
+
 # Deactivate the virtual environment
 deactivate

@@ -200,7 +200,7 @@ def main(args: Union[str, List[str]] = None) -> int:
     searcher.setSimilarity(similarity)
 
     queries_file: str = config.queries
-    if queries_file.endswith(".tsv"):
+    if queries_file.endswith(".tsv") or queries_file == "data/queries/queries.csv":
         delimiter = '\t'
     else:
         delimiter = ','
