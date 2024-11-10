@@ -35,7 +35,11 @@ Program arguments:
 `--queries`: *Path to the query file (supported formats: CSV and TSV).*  
 `--ranking_dir`: *Directory where computed query results will be saved.*  
 `--evaluation_file`: *CSV file where evaluation results will be appended.*  
-`--reference_file`: *Path to the file containing the reference query results for evaluation.*
+`--reference_file`: *Path to the file containing the reference query results for evaluation.*  
+`--query_type`: *The type of query to evaluate (options: fuzzy, phrase, boolean_and, boolean_or). Default is
+boolean_or.*  
+`--maxEdits`: *Maximum number of edits (insert, delete, or change) for fuzzy queries (range: 0 to 2). Default is 2.*  
+`--slop`: *Number of terms that may occur between terms in a phrase query. Default is 0.*
 
 The program arguments can be provided either by a configuration file (by default config.ini) or by command-line
 arguments.
