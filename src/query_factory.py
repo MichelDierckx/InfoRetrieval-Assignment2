@@ -1,6 +1,6 @@
+from org.apache.lucene.index import Term
 from org.apache.lucene.queryparser.classic import QueryParser
 from org.apache.lucene.search import BooleanQuery, PhraseQuery, BooleanClause, FuzzyQuery
-from org.apache.lucene.index import Term
 
 
 class QueryFactory:

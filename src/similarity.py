@@ -10,7 +10,8 @@ class SimilarityFactory:
         """Return the appropriate Lucene similarity based on a name."""
         similarity_name = similarity_type.lower()
         if similarity_name == "bm25":
-            return BM25Similarity(k1, b)    # https://lucene.apache.org/core/9_12_0/core/org/apache/lucene/search/similarities/BM25Similarity.html
+            return BM25Similarity(k1,
+                                  b)  # https://lucene.apache.org/core/9_12_0/core/org/apache/lucene/search/similarities/BM25Similarity.html
         elif similarity_name == "classic":
             return ClassicSimilarity()  # https://lucene.apache.org/core/9_12_0/core/org/apache/lucene/search/similarities/ClassicSimilarity.html
         else:
